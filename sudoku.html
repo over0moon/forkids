@@ -1,0 +1,242 @@
+<html>
+
+<!--
+
+sudoku.html Copyright 2010 <hsb9hsb@gmail.com>
+This program is free software; you can redistribute it and/or modify
+it under GPL 2 or later version.
+-->
+<head>
+<meta charset=utf-8>
+<title>♥开心数独</title>
+<link rel="shortcut icon" href="me.png">
+<style>
+body{
+background: url(1.png) 2% 90% no-repeat
+}
+#board {
+border: 1 dotted black;
+background-color:rgba(0,0,128,0.1);
+box-shadow: 0px 0px 16px #909090;
+}
+td {
+background-color:transparent;
+border: none;
+text-valign: middle;
+text-align: center;
+font-size: 1.2em;
+color: black;
+width: 1.5em;
+height: 1em;
+}
+</style>
+</head>
+
+<body>
+<table width="100%" height="100%">
+
+<td>
+<table id="board" align="center" valign="middle" title="箭头键移动 ? 光标, 填写1-9(错的自动擦掉). 填满后各行.列.块里的数字不重复."></table>
+<label id="time_txt" style="font-size:0.9em;"> 0:00</label><button style="cursor:pointer" onclick=newGame()>新局</button>
+</td>
+
+</table>
+</body>
+
+<script>
+var htm=[];
+htm[0]="<tbody>";
+for(i=1;i<=9;i++){
+htm[htm.length]="<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>";
+}
+htm[htm.length]="</tbody>";
+document.getElementById("board").innerHTML= htm.join("");
+var cell=document.getElementById("board").getElementsByTagName('td');
+vline=[ 3,12,21,30,39,48,57,66,75, 6,15,24,33,42,51,60,69,78];
+hline=[27,28,29,30,31,32,33,34,35, 54,55,56,57,58,59,60,61,62];
+for(i=0;i<18;i++){
+cell[hline[i]].style.borderTop ="1 dotted black";
+cell[vline[i]].style.borderLeft ="1 dotted black";
+}
+
+document.onkeydown=onkeydown;
+document.onkeyup=onkeyup;
+
+
+var cursor=0;
+var blank=40; // no 0
+var rest=blank;
+var clock=0;
+var neederase=false;
+var r=[81]; //
+var lock=[81]; // bool
+newGame();
+
+function newGame()
+{
+var s=[
+"968547132142893567357126849284951376715362984639478215471285693593614728826739451",
+"259714368368592147147683259895146723726935814431278695972851436683429571514367982",
+"239618754458273619671594823893421567567839241142756938716942385385167492924385176",
+"357284691168759234294136578716425983435918726829367145981542367673891452542673819",
+"351678924247159836689324715193487562526913478478265193862741359735892641914536287",
+"647891532139254678258367149893526417412738956765149283324675891571982364986413725",
+"213647895567198423489235167391524786658379214724816359942751638835462971176983542",
+"634592718527168934189347526968423157415789362273615489852934671796251843341876295",
+"976423185132586479548179236457918623689342517213657948864791352795234861321865794",
+"351267894479318625268459371827134956516892437934675182692581743743926518185743269"];
+var puzz= s[parseInt(Math.random()*10)]; //选模板
+var face=[0,1,2,3,4,5,6,7,8,9];
+shuffle(face,1,9); //数字变幻
+var o=[81]; for(i=0;i<=80;i++) o[i]=i;
+shuffle(o,0,80); //随机空白
+for(i= 0;i<blank;i++){ // ___空白
+r[ o[i] ] = ' ';
+lock[ o[i] ] = false;
+cell[ o[i] ].style.color='green';
+cell[ o[i] ].id = o[i];
+cell[ o[i] ].onclick=function(){// focus here
+cell[cursor].style.color='green';
+cell[cursor].innerText= r[cursor];
+cursor=this.id;
+cell[cursor].style.color='blue';
+cell[cursor].innerText= (r[cursor]==' ')?'?':r[cursor] ;
+};
+}
+for(i=blank;i<=80;i++){ // ***数字
+r[ o[i] ] = face[ puzz[o[i]] ];
+lock[ o[i] ] = true;
+cell[ o[i] ].style.color='black';
+}
+
+for(i=0;i<=80;i++){
+cell[i].innerText= r[i];
+}
+
+cursor=0;
+while(lock[cursor]) cursor++;
+cell[cursor].style.color='blue';
+cell[cursor].innerText='?';
+document.getElementById("time_txt").innerText = "0:00";
+if(clock !=0) clearInterval(clock);
+var seconds=0;
+clock=setInterval(function(){seconds++;document.getElementById("time_txt").innerText=parseInt(seconds/60) + ":" + ( (seconds%60 > 9) ? seconds%60 : "0"+seconds%60 )},1000);
+rest=blank;
+}
+
+function onkeydown()
+{
+if(rest==0)return;
+c=String.fromCharCode(window.event.keyCode);
+switch(c){
+case "1":
+case "2":
+case "3":
+case "4":
+case "5":
+case "6":
+case "7":
+case "8":
+case "9":
+if(r[cursor]==c)return;
+if(maybe(c,cursor)){
+if(r[cursor]==' ')rest--;
+r[cursor]=c;
+cell[cursor].style.color='blue';
+cell[cursor].innerText= c;
+}else{
+neederase=true;
+if(r[cursor]!=' ')rest++;
+r[cursor]=' ';
+cell[cursor].style.color='red';
+cell[cursor].innerText= c;
+}
+if(rest==0){ // OK !
+clearInterval(clock); clock=0; // 停
+cell[cursor].style.color='green';
+cell[cursor].innerText='?';
+document.getElementById("time_txt").innerHTML="<font color='red' size=1.5em > ♥ </font>"+ document.getElementById("time_txt").innerText;
+}
+break;
+case "'": // >
+case "%": // <
+case "(": // v
+case "&": // ^
+t=cursor;
+switch(c){ // 移动光标
+case "'":
+do{
+t++;
+if(t>80)t=0;
+}while(lock[t]);
+break;
+case "%":
+do{
+t--;
+if(t<0)t=80;
+}while(lock[t]);
+break;
+case "(":
+do{
+t=(t+9)%81;
+if(t<9)t=(t+1)%9;
+}while(lock[t]);
+break;
+case "&":
+do{
+t-=9;
+if(t<0 ){ t= (t==-9) ? 80 : t+80; }
+}while(lock[t]);
+break;
+}
+cell[cursor].style.color='green';
+cell[cursor].innerText= r[cursor];
+cursor=t;
+cell[cursor].style.color='blue';
+cell[cursor].innerText= (r[cursor]==' ')?'?':r[cursor];
+break;
+}
+}
+
+function onkeyup()
+{
+if(neederase){
+neederase=false;
+cell[cursor].style.color='blue';
+cell[cursor].innerText='?';
+}
+}
+
+function maybe(c,i)
+{
+t=i-i%9; //row
+for(n=0;n<9;n++){
+if(r[t] == c)return false;
+t++;
+}
+t=i%9; //col
+for(n=0;n<9;n++){
+if(r[t] == c)return false;
+t+=9;
+}
+t=i-(i%27)+(i%9)-(i%9)%3; // box
+for(n=0;n<3;n++){
+if(r[t++] == c)return false;
+if(r[t++] == c)return false;
+if(r[t++] == c)return false;
+t+=6;
+}
+return true;
+}
+
+function shuffle(array,low,high){
+for(i=high;i>low;i--){
+x=parseInt(Math.random()*(i-low+1)+low);
+t=array[i];array[i]=array[x];array[x]=t;
+}
+}
+</script>
+
+</html>
+
+
