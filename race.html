@@ -1,24 +1,48 @@
 <html>
 <head>
-<script>if (top.location !== self.location) { top.location=self.location;}</script>
 <meta charset="utf-8">
 <title>小旋风</title>
-<script> // +-速算竞赛。限时，答对多的赢。 得分score 最大数high 最小数low 限时time秒
+<style type="text/css">
+ #Showlist	{font-size:2em;cursor:hand}
+ #Topic		{font-size:5em}
+ #Who		{border:none;border-bottom:1px dotted black}
+ #A		{font-size:1em;color:green}
+</style>
+</head>
+<body>
+<center><pre>
+<span id="Showlist">石罢小学速算比赛</span>
+
+<span id="Msg">(在?栏里填好答案,按回车键)</span>
+
+
+<img src=logo.png> <span id="Topic"><label id="Q" for=‘A’>0 + 0 =</label><input id="A" value='?' size=4 ></span>
+
+<span id='Ctl'>姓名? <input id='Who' autofocus><button id="Start">开始</button></span>
+
+<span id='List'></span>
+</pre></center>
+<script>
+// +-速算竞赛。60s 答对多少题? 得分score 最大数high 最小数low 限时time秒
 var score=0, high=100, low=10, time=60
 var c=["0","高梦雨","姬东博","姬东梅","姬国朋","姬昊磊","姬佳莹","姬俊杰","姬孟阳","姬瑞琦","姬帅杰","姬祥","姬晓梅","姬亚琦","姬怡冉","姬艺景","姬意然","姬玉静","姬子玥","孔晨静","孔琦菲","孔维航","孔艺涵","李亚琦","李益绅","李雨斐","马朵朵","孙高科","孙浩翔","孙坤博","王一帆","王雨露","吴浩泉","武雨佳","徐乐珊","徐乐瑶","徐璐瑶","徐世航","徐亚可","徐亚朋","徐亚鹏","袁梅露","张世俊","张一飞","甄妍卓","甄有福"]
 if( ! localStorage.top)localStorage.top=score
 document.title+= ' - 高分 '+localStorage.top
+Start.addEventListener("click",init,false)
+Showlist.addEventListener("click",showlist,false)
+
 function next(){
 	x=Math.round(Math.random()*(high-low))+low
 	y=Math.round(Math.random()*(high-low))+low
 	s=Math.random()>.5?"+":"-"
 	if( s=="-" && x<y){tmp=x;x=y;y=tmp}
 	Q.innerText= x+s+y+'='
+	right= (s=='+')?x+y:x-y
 }
 function init(){			//go!
-	if(c[parseInt(who.value)]){who.value=c[parseInt(who.value)]}
-	ctl.style.display="none"
-	msg.innerText= who.value+' (在?栏里填好答案,按回车键)'
+	if(c[parseInt(Who.value)]){Who.value=c[parseInt(Who.value)]}
+	Ctl.style.display="none"
+	Msg.innerText= Who.value+' (在?栏里填好答案,按回车键)'
 	score=0
 	next()
 	A.addEventListener("keydown",onkey,false)
@@ -27,7 +51,7 @@ function init(){			//go!
 	sec=time
 	clock=setInterval(function(){	// ... 3 2 1 0
 		sec--
-		msg.innerText= who.value+"  倒计时 "+sec+"  得分 "+score
+		Msg.innerText= Who.value+"  倒计时 "+sec+"  得分 "+score
 		if(sec==0)clearInterval(clock)
 	},1000)
 	setTimeout(function(){	//over
@@ -36,46 +60,32 @@ function init(){			//go!
 			localStorage.top=score
 			document.title='小旋风  - 高分 '+localStorage.top
 		}
-		if(score>localStorage[who.value] || !localStorage[who.value]){
-			localStorage[who.value]=score
+		if(score>localStorage[Who.value] || !localStorage[Who.value]){
+			localStorage[Who.value]=score
 		}
 		Q.innerText='0 + 0  ='
-		ctl.style.display="block"
-		who.select()
+		Ctl.style.display="block"
+		Who.select()
 	},time*1000)
 }
 function onkey(){ // key 'Enter'
 	if(event.keyCode!=13)return
-	if(  eval(Q.innerText+'='+parseInt(A.value)) ){	// 1+1==2 v
+	if( parseInt(A.value)==right ){	// right
 		score++
-		msg.innerText= who.value+"  倒计时"+sec+"  得分"+score
+		Msg.innerText= Who.value+"  倒计时"+sec+"  得分"+score
 		next()
 	}
 	A.value=""
 }
-function showlist(){	// list show/hide
-	if(list.innerText !=""){list.innerText="";return}
+function showlist(){	// List show/hide
+	if(List.innerText !=""){List.innerText="";return}
 	t=[]
 	for(i =0;i<localStorage.length;i++){
 		if(localStorage.key(i) =='top')continue
 		t[i]=localStorage[localStorage.key(i)]+' | '+localStorage.key(i)
 	}
-	list.innerText=t.sort(function(a,b){return parseInt(b)-parseInt(a);}).slice(0,45).join('\n')
+	List.innerText=t.sort(function(a,b){return parseInt(b)-parseInt(a);}).slice(0,45).join('\n')
 }
 </script>
-</head>
-<body>
-<center><pre>
-<span style="font-size:2em" onclick=showlist()>石罢小学速算比赛</span>
-
-<span id="msg">(在?栏里填好答案,按回车键)</span>
-
-
-<span style="font-size:5em"><label id="Q" for=‘A’>0 + 0 =</label><input id="A" value='?' size=4 style="font-size:1em;color:green"></span>
-
-<span id='ctl'>姓名? <input id='who' autofocus style='border:none;border-bottom:1px dotted black'><button id="start" onclick=init()>开始</button></span>
-
-<span id='list'></span>
-</pre></center>
 </body>
 </html>
